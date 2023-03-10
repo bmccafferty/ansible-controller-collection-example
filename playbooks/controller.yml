@@ -6,3 +6,65 @@
 
     - name: Include vars
       ansible.builtin.include_vars: ../vars/auth.yml
+
+    - name: Add project
+      ansible.controller.project:
+        name: "CollectionPing"
+        description: "Auto Added by Controller Collection"
+        organization: "Default"
+        state: present
+        scm_type: git
+        scm_url: https://github.com/bmccafferty/simple-plays.git
+        scm_credential: GitHub
+        controller_oauthtoken: "{{ controller_oauthtoken }}"
+        validate_certs: "{{ validate_certs }}"
+
+    - name: Add Inventory
+      ansible.controller.inventory:
+        name: CollectionInv
+        description: "Auto Added by Controller Collection"
+        organization: "Default"
+        state: present
+        controller_oauthtoken: "{{ controller_oauthtoken }}"
+        validate_certs: "{{ validate_certs }}"
+
+    - name: Add Hosts to Inv
+      ansible.controller.host:
+        name: "{{ item }}"
+        inventory: "CollectionInv"
+        state: present
+        controller_oauthtoken: "{{ controller_oauthtoken }}"
+        validate_certs: "{{ validate_certs }}"
+      loop:
+        - "rhel8-HV-01"
+        - "rhel8-HV-02"
+
+    - name: Create Ping job template
+      ansible.controller.job_template:
+        name: "CollectionPing"
+        job_type: "run"
+        organization: "Default"
+        inventory: "CollectionInv"
+        project: "CollectionPing"
+        playbook: "playbooks/ping.yml"
+        credentials:
+          - "Hasivault SSH Cred"
+        state: present
+        controller_oauthtoken: "{{ controller_oauthtoken }}"
+        validate_certs: "{{ validate_certs }}"
+
+    - name: Launch the Ping Job
+      ansible.controller.job_launch:
+        job_template: "CollectionPing"
+        controller_oauthtoken: "{{ controller_oauthtoken }}"
+        validate_certs: "{{ validate_certs }}"
+      register: job
+
+    - name: Wait for job to complete
+      ansible.controller.job_wait:
+        job_id: "{{ job.id }}"
+        timeout: 120
+        controller_oauthtoken: "{{ controller_oauthtoken }}"
+        validate_certs: "{{ validate_certs }}"
+
+

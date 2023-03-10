@@ -1,0 +1,41 @@
+---
+- name: Some Automation using Ansible Controller
+  hosts: all
+  gather_facts: false
+  tasks:
+
+    - name: Include vars
+      ansible.builtin.include_vars: ../vars/auth.yml
+
+    - name: Remove project
+      ansible.controller.project:
+        name: "CollectionPing"
+        description: "Auto Added by Controller Collection"
+        organization: "Default"
+        state: absent
+        controller_oauthtoken: "{{ controller_oauthtoken }}"
+        validate_certs: "{{ validate_certs }}"
+
+    - name: Remove Inventory
+      ansible.controller.inventory:
+        name: CollectionInv
+        organization: "Default"
+        state: absent
+        controller_oauthtoken: "{{ controller_oauthtoken }}"
+        validate_certs: "{{ validate_certs }}"
+
+    - name: Remove Ping job template
+      ansible.controller.job_template:
+        name: "CollectionPing"
+        job_type: "run"
+        organization: "Default"
+        inventory: "CollectionInv"
+        project: "CollectionPing"
+        playbook: "playbooks/ping.yml"
+        credentials:
+          - "Hasivault SSH Cred"
+        state: absent
+        controller_oauthtoken: "{{ controller_oauthtoken }}"
+        validate_certs: "{{ validate_certs }}"
+
+
